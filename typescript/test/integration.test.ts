@@ -387,6 +387,25 @@ function suite(spec: StoreSpec) {
     await expect(g.relations.update(dated.id, { event_time: null })).rejects.toThrow(/nothing to update/);
   });
 
+  it("words a bad stance or status as the Python SDK does, after checking the id exists", async () => {
+    const g = fresh();
+    await g.entities.create("Ann", "Person");
+    await g.entities.create("Acme", "Company");
+    const stance = "preference stance must be one of ['disinterest', 'preference'], got 'meh'";
+    await expect(g.preferences.create("person:ann", "db", "company:acme", { stance: "meh" as never })).rejects.toThrow(
+      stance,
+    );
+    await expect(g.preferences.list({ stance: "meh" as never })).rejects.toThrow(stance);
+    const status = "decision status must be one of ['active', 'completed', 'reversed'], got 'weird'";
+    await expect(g.decisions.create("T", { status: "weird" as never })).rejects.toThrow(status);
+    await expect(g.decisions.list({ status: "weird" as never })).rejects.toThrow(status);
+    const dec = await g.decisions.create("T");
+    await expect(g.decisions.update(dec.id, { status: "weird" as never })).rejects.toThrow(status);
+    await expect(g.decisions.update("decision:nope", { status: "weird" as never })).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
+  });
+
   it("fails every call after close with StoreError, even from a second graph on the store", async () => {
     const g = fresh();
     await g.entities.create("Before", "Thing");

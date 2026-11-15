@@ -66,6 +66,11 @@ def test_missing_refs_and_errors():
         run(g.preferences.create("person:soham", "database", "company:ghost"))
     with pytest.raises(NotFoundError):
         run(g.preferences.update("preference:nope", strength=1.0))
+    stance = r"^preference stance must be one of \['disinterest', 'preference'\], got 'meh'$"
+    with pytest.raises(ValidationError, match=stance):
+        run(g.preferences.create("person:soham", "database", "company:hydradb", stance="meh"))
+    with pytest.raises(ValidationError, match=stance):
+        run(g.preferences.list(stance="meh"))
     run(g.preferences.create("person:soham", "database", "company:hydradb", id="preference:x"))
     with pytest.raises(ConflictError):
         run(g.preferences.create("person:soham", "database", "company:hydradb", id="preference:x"))

@@ -71,6 +71,16 @@ function suite(spec: StoreSpec) {
       ).rejects.toThrow(message);
       await expect(g.relations.update(REL, { evidence: [{ source_id: "m", ...bad }] })).rejects.toThrow(message);
     }
+    for (const [evidence, message] of [
+      ["m", "evidence must be a list of Evidence objects, got string"],
+      [[5], "evidence must be EvidenceInput objects (selfgraph.EvidenceInput(...)), got a number"],
+      [[null], "evidence must be EvidenceInput objects (selfgraph.EvidenceInput(...)), got a null"],
+    ] as const) {
+      await expect(
+        g.relations.create("person:ada", "KNOWS", "company:acme", { evidence: evidence as never }),
+      ).rejects.toThrow(message);
+      await expect(g.relations.update(REL, { evidence: evidence as never })).rejects.toThrow(message);
+    }
   });
 
   it("records one evidence per source version, and other sources on their own manual version", async () => {

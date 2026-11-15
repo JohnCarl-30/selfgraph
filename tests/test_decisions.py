@@ -78,6 +78,15 @@ def test_conflict_notfound_validation():
         run(g.decisions.create("D2", steps=[r1.id], id="decision:d"))
     with pytest.raises(NotFoundError):
         run(g.decisions.update("decision:nope", status="active"))
+    with pytest.raises(NotFoundError):
+        run(g.decisions.update("decision:nope", status="weird"))
+    status = r"^decision status must be one of \['active', 'completed', 'reversed'\], got 'weird'$"
+    with pytest.raises(ValidationError, match=status):
+        run(g.decisions.create("Bad3", steps=[r1.id], status="weird"))
+    with pytest.raises(ValidationError, match=status):
+        run(g.decisions.list(status="weird"))
+    with pytest.raises(ValidationError, match=status):
+        run(g.decisions.update("decision:d", status="weird"))
     with pytest.raises(ValidationError):
         run(g.decisions.create("Bad", steps=["relation:ghost"], id="decision:bad"))
     with pytest.raises(ValidationError):

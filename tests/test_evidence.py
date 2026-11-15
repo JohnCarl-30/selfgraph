@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from helpers import HYDRADB, create_entities, fresh_graph, make_store, run, unique_ns
 
@@ -170,6 +172,15 @@ def test_relation_evidence_accepts_dicts_and_rejects_bad_offsets():
             run(g.relations.create("person:ada", "KNOWS", "company:acme", evidence=[{"source_id": "m", **bad}]))
         with pytest.raises(ValidationError, match=f"^{message}$"):
             run(g.relations.update(REL, evidence=[EvidenceInput(source_id="m", **bad)]))
+    for evidence, message in (
+        ("m", "evidence must be a list of Evidence objects, got str"),
+        ([5], "evidence must be EvidenceInput objects (selfgraph.EvidenceInput(...)), got a int"),
+        ([None], "evidence must be EvidenceInput objects (selfgraph.EvidenceInput(...)), got a NoneType"),
+    ):
+        with pytest.raises(ValidationError, match=f"^{re.escape(message)}$"):
+            run(g.relations.create("person:ada", "KNOWS", "company:acme", evidence=evidence))
+        with pytest.raises(ValidationError, match=f"^{re.escape(message)}$"):
+            run(g.relations.update(REL, evidence=evidence))
     with pytest.raises(ValidationError, match="^evidence confidence must be between 0 and 1, got 1.5$"):
         run(g.relations.update(REL, evidence=[EvidenceInput.model_construct(source_id="m", confidence=1.5)]))
 
